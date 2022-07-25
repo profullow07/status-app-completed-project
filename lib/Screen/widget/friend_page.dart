@@ -1,10 +1,15 @@
+import 'dart:developer';
+
 import 'package:all_status_bangla/Colors/colors_code.dart';
+import 'package:all_status_bangla/model/AdHelper.dart';
 import 'package:all_status_bangla/model/model.dart';
+import 'package:flutter_share/flutter_share.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:all_status_bangla/Screen/button/favoritebutton.dart';
-import 'package:all_status_bangla/Screen/button/sharebutton.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class FriendPage extends StatefulWidget {
   const FriendPage({Key? key}) : super(key: key);
@@ -15,6 +20,54 @@ class FriendPage extends StatefulWidget {
 
 class _FriendPageState extends State<FriendPage> {
   String copytext = "";
+  int selection = 0;
+  late BannerAd myBanner;
+  bool isbannerAdload = false;
+  @override
+  void initState() {
+    super.initState();
+    initBannerAd();
+  }
+
+  initBannerAd() async {
+    myBanner = BannerAd(
+      size: AdSize.banner,
+      adUnitId: AdHelper.bannnerAD(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          log("Banner ads loaded");
+          setState(() {
+            isbannerAdload = true;
+          });
+        },
+        onAdClosed: (ad) {
+          ad.dispose();
+          isbannerAdload = false;
+        },
+        onAdFailedToLoad: (ad, error) {
+          log(error.toString());
+          isbannerAdload = false;
+        },
+      ),
+      request: AdRequest(),
+    );
+    await myBanner.load();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    myBanner.load();
+  }
+
+
+  Future<void> share(String copytext) async {
+    await FlutterShare.share(
+      title: 'SHARE TEXT YOUR FRIENDS',
+      text: copytext,
+      linkUrl: "https://play.google.com/store/apps/details?id=com.borolocit.allstatusbd",
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +151,22 @@ class _FriendPageState extends State<FriendPage> {
                                 label: Text("COPY")),
                           ),
                           Favoritebuton(),
-                          Sharebutton(),
+                          SizedBox(
+                            height: 50,
+                            width: 120,
+                            child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  primary: Colors.blue,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    selection = index;
+                                    share(copytext).toString();
+                                  });
+                                },
+                                icon: Icon(Icons.share),
+                                label: Text("SHARE")),
+                          )
                         ],
                       ),
                     ),
@@ -107,6 +175,13 @@ class _FriendPageState extends State<FriendPage> {
               );
             }),
       ),
+      bottomNavigationBar: isbannerAdload
+          ? Container(
+              width: myBanner.size.width.toDouble(),
+              height: myBanner.size.height.toDouble(),
+              child: AdWidget(ad: myBanner),
+            )
+          : SizedBox(),
     );
   }
 }

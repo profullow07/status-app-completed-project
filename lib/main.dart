@@ -1,12 +1,33 @@
+import 'dart:developer';
+
+import 'package:all_status_bangla/model/AdHelper.dart';
 import 'package:flutter/material.dart';
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'Screen/Splash/Splash_screen.dart';
 
-void main() {
+AppOpenAd? openAd;
+
+Future<void> loadAd() async {
+  await AppOpenAd.load(
+      adUnitId: AdHelper.openappAD(),
+      request: const AdRequest(),
+      adLoadCallback: AppOpenAdLoadCallback(onAdLoaded: (ad) {
+        log("App Open Ads Loaded");
+        openAd = ad;
+        openAd!.show();
+      }, onAdFailedToLoad: (error) {
+        print("ads failed to loaded $error");
+      }),
+      orientation: AppOpenAd.orientationPortrait);
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
+  await MobileAds.instance.initialize();
+  await loadAd();
+
   runApp(MyApp());
 }
 

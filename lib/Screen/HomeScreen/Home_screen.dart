@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:all_status_bangla/Colors/colors_code.dart';
 import 'package:all_status_bangla/Screen/HomeScreen/DetailsPage.dart';
+import 'package:all_status_bangla/Screen/HomeScreen/FiveStar.dart';
 import 'package:all_status_bangla/Screen/HomeScreen/privacy_policy.dart';
+import 'package:all_status_bangla/model/AdHelper.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:all_status_bangla/Screen/HomeScreen/button_screen.dart';
 
@@ -9,12 +13,11 @@ import 'package:all_status_bangla/Screen/widget/MomDad_page.dart';
 import 'package:all_status_bangla/Screen/widget/birtday_page.dart';
 import 'package:all_status_bangla/Screen/widget/friend_page.dart';
 import 'package:all_status_bangla/Screen/widget/love_page.dart';
-import 'package:all_status_bangla/Screen/widget/romantic_screen%20dart';
+import 'package:all_status_bangla/Screen/widget/romantic_screen.dart';
 import 'package:all_status_bangla/Screen/widget/Emosotional_screen.dart';
 import 'package:all_status_bangla/Screen/widget/sad_screen.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_share/flutter_share.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class Home_screen extends StatefulWidget {
@@ -34,9 +37,10 @@ class _Home_screenState extends State<Home_screen> {
   ];
 
   late BannerAd myBanner;
-  late InterstitialAd _interstitialAd;
+  bool isbannerAdload = false;
 
-  bool isAdload = false;
+  late InterstitialAd _interstitialAd;
+  bool isInterstitialAdload = false;
 
   @override
   void initState() {
@@ -45,21 +49,25 @@ class _Home_screenState extends State<Home_screen> {
     interstiAd();
   }
 
-  void interstiAd() {
-    InterstitialAd.load(
-        adUnitId: 'ca-app-pub-3217292006726724/7964902738',
+  void interstiAd() async {
+    await InterstitialAd.load(
+        adUnitId: AdHelper.intertistialAD(),
         request: AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
-            // Keep a reference to the ad so you can show it later.
+            log("Interstitial Ads Loaded");
             this._interstitialAd = ad;
+            isInterstitialAdload = true;
           },
-          onAdFailedToLoad: (LoadAdError error) {},
+          onAdFailedToLoad: (LoadAdError error) {
+            log(error.toString());
+            isInterstitialAdload = false;
+          },
         ));
   }
 
   void onAdLoaded(InterstitialAd ad) {
-    isAdload = true;
+    isInterstitialAdload = true;
     _interstitialAd = ad;
     _interstitialAd.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (InterstitialAd ad) {
@@ -74,35 +82,35 @@ class _Home_screenState extends State<Home_screen> {
     );
   }
 
-  initBannerAd() {
+  initBannerAd() async {
     myBanner = BannerAd(
       size: AdSize.banner,
-      adUnitId: 'ca-app-pub-3217292006726724/9386877186',
+      adUnitId: AdHelper.bannnerAD(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
+          log("Banner ads loaded");
           setState(() {
-            isAdload = true;
+            isbannerAdload = true;
           });
         },
-        onAdFailedToLoad: (ad, error) {},
+        onAdClosed: (ad) {
+          ad.dispose();
+          isbannerAdload = false;
+        },
+        onAdFailedToLoad: (ad, error) {
+          log(error.toString());
+          isbannerAdload = false;
+        },
       ),
       request: AdRequest(),
     );
-    myBanner.load();
+    await myBanner.load();
   }
 
   @override
   void dispose() {
     super.dispose();
     myBanner.load();
-  }
-
-  Future<void> share() async {
-    await FlutterShare.share(
-        title: 'Example share',
-        text: 'Example share text',
-        linkUrl: 'https://flutter.dev/',
-        chooserTitle: 'Example Chooser Title');
   }
 
   @override
@@ -188,6 +196,21 @@ class _Home_screenState extends State<Home_screen> {
                 ),
                 trailing: Icon(Icons.arrow_forward),
               ),
+              ListTile(
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => FiveStarPage()));
+                },
+                leading: Icon(Icons.star),
+                title: Text(
+                  "Apps Review",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                trailing: Icon(Icons.arrow_forward),
+              ),
               Expanded(
                 child: Container(),
               ),
@@ -251,7 +274,7 @@ class _Home_screenState extends State<Home_screen> {
                 children: [
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(
@@ -265,7 +288,7 @@ class _Home_screenState extends State<Home_screen> {
                   ),
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
 
@@ -288,7 +311,7 @@ class _Home_screenState extends State<Home_screen> {
                 children: [
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(context,
@@ -300,7 +323,7 @@ class _Home_screenState extends State<Home_screen> {
                   ),
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(context,
@@ -320,7 +343,7 @@ class _Home_screenState extends State<Home_screen> {
                 children: [
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(
@@ -334,7 +357,7 @@ class _Home_screenState extends State<Home_screen> {
                   ),
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(
@@ -356,7 +379,7 @@ class _Home_screenState extends State<Home_screen> {
                 children: [
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(
@@ -370,7 +393,7 @@ class _Home_screenState extends State<Home_screen> {
                   ),
                   boxbutton(
                     Ontap: () {
-                      if (isAdload) {
+                      if (isInterstitialAdload) {
                         _interstitialAd.show();
                       }
                       Navigator.push(context,
@@ -391,7 +414,7 @@ class _Home_screenState extends State<Home_screen> {
           ),
         ),
       ),
-      bottomNavigationBar: isAdload
+      bottomNavigationBar: isbannerAdload
           ? Container(
               width: myBanner.size.width.toDouble(),
               height: myBanner.size.height.toDouble(),
